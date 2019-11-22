@@ -64,7 +64,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Setup Kef platform."""
+    """Set up the KEF platform."""
     if DATA_KEF not in hass.data:
         hass.data[DATA_KEF] = {}
 
@@ -169,14 +169,17 @@ class KefMediaPlayer(MediaPlayerDevice):
 
     @property
     def available(self):
+        """Return if the speaker is reachable online."""
         return self._is_online
 
     @property
     def unique_id(self):
+        """Return the device unique id."""
         return f"{self._speaker.host}:{self._speaker.port}"
 
     @property
     def icon(self):
+        """Return the device's icon."""
         return "mdi:speaker-wireless"
 
     @property
@@ -186,6 +189,7 @@ class KefMediaPlayer(MediaPlayerDevice):
 
     @property
     def force_update(self):
+        """Force update."""
         return False
 
     async def async_turn_off(self):
