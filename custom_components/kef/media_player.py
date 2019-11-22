@@ -24,7 +24,7 @@ from homeassistant.const import (
 )
 from homeassistant.helpers import config_validation as cv
 
-from custom_components.kef.async_kef_api import INPUT_SOURCES, AsyncKefSpeaker
+from aiokef import INPUT_SOURCES, AsyncKefSpeaker
 
 _CONFIGURING = {}
 _LOGGER = logging.getLogger(__name__)
