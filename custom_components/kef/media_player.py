@@ -198,25 +198,22 @@ class KefMediaPlayer(MediaPlayerDevice):
     async def async_turn_off(self):
         """Turn the media player off."""
         await self._speaker.turn_off()
-        self._state = STATE_OFF
 
     async def async_turn_on(self):
         """Turn the media player on."""
         await self._speaker.turn_on()
-        self._state = STATE_ON
 
     async def async_volume_up(self):
         """Volume up the media player."""
-        self._volume = await self._speaker.increase_volume()
+        await self._speaker.increase_volume()
 
     async def async_volume_down(self):
         """Volume down the media player."""
-        self._volume = await self._speaker.decrease_volume()
+        await self._speaker.decrease_volume()
 
     async def async_set_volume_level(self, volume):
         """Set volume level, range 0..1."""
         await self._speaker.set_volume(volume)
-        self._volume = volume
 
     async def async_mute_volume(self, mute):
         """Mute (True) or unmute (False) media player."""
@@ -224,12 +221,10 @@ class KefMediaPlayer(MediaPlayerDevice):
             await self._speaker.mute()
         else:
             await self._speaker.unmute()
-        self._muted = mute
 
     async def async_select_source(self, source: str):
         """Select input source."""
         if source in self.source_list:
-            self._source = source
             await self._speaker.set_source(source)
         else:
             raise ValueError(f"Unknown input source: {source}.")
