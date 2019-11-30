@@ -34,7 +34,9 @@ DEFAULT_NAME = "KEF"
 DEFAULT_PORT = 50001
 DEFAULT_MAX_VOLUME = 0.5
 DEFAULT_VOLUME_STEP = 0.05
-DATA_KEF = "kef"
+DEFAULT_INVERSE_SPEAKER_MODE = False
+
+DOMAIN = "kef"
 
 SCAN_INTERVAL = datetime.timedelta(seconds=30)
 PARALLEL_UPDATES = 0
@@ -52,6 +54,9 @@ SUPPORT_KEF = (
 
 CONF_MAX_VOLUME = "maximum_volume"
 CONF_VOLUME_STEP = "volume_step"
+CONF_INVERSE_SPEAKER_MODE = "inverse_speaker_mode"
+CONF_STANDBY_TIME = "standby_time"
+
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
@@ -59,24 +64,30 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_MAX_VOLUME, default=DEFAULT_MAX_VOLUME): cv.small_float,
         vol.Optional(CONF_VOLUME_STEP, default=DEFAULT_VOLUME_STEP): cv.small_float,
+        vol.Optional(
+            CONF_INVERSE_SPEAKER_MODE, default=DEFAULT_INVERSE_SPEAKER_MODE
+        ): cv.boolean,
+        vol.Optional(CONF_STANDBY_TIME): vol.In([20, 60]),
     }
 )
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the KEF platform."""
-    if DATA_KEF not in hass.data:
-        hass.data[DATA_KEF] = {}
+    if DOMAIN not in hass.data:
+        hass.data[DOMAIN] = {}
 
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT)
     name = config.get(CONF_NAME)
     maximum_volume = config.get(CONF_MAX_VOLUME)
     volume_step = config.get(CONF_VOLUME_STEP)
+    inverse_speaker_mode = config.get(CONF_INVERSE_SPEAKER_MODE)
+    standby_time = config.get(CONF_STANDBY_TIME)
 
     _LOGGER.debug(
         "Setting up %s with host: %s, port: %s, name: %s, sources: %s",
-        DATA_KEF,
+        DOMAIN,
         host,
         port,
         name,
@@ -87,28 +98,47 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         name,
         host,
         port,
-        maximum_volume=maximum_volume,
-        volume_step=volume_step,
+        maximum_volume,
+        volume_step,
+        standby_time,
+        inverse_speaker_mode,
         sources=KEF_LS50_SOURCES,
         ioloop=hass.loop,
     )
     unique_id = media_player.unique_id
-    if unique_id in hass.data[DATA_KEF]:
+    if unique_id in hass.data[DOMAIN]:
         _LOGGER.debug("%s is already configured.", unique_id)
     else:
-        hass.data[DATA_KEF][unique_id] = media_player
+        hass.data[DOMAIN][unique_id] = media_player
         async_add_entities([media_player], update_before_add=True)
 
 
 class KefMediaPlayer(MediaPlayerDevice):
     """Kef Player Object."""
 
-    def __init__(self, name, host, port, maximum_volume, volume_step, sources, ioloop):
+    def __init__(
+        self,
+        name,
+        host,
+        port,
+        maximum_volume,
+        volume_step,
+        standby_time,
+        inverse_speaker_mode,
+        sources,
+        ioloop,
+    ):
         """Initialize the media player."""
         self._name = name
         self._sources = sources
         self._speaker = AsyncKefSpeaker(
-            host, port, volume_step, maximum_volume, ioloop=ioloop
+            host,
+            port,
+            volume_step,
+            maximum_volume,
+            standby_time,
+            inverse_speaker_mode,
+            ioloop=ioloop,
         )
 
         self._state = STATE_UNKNOWN
