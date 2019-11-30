@@ -30,6 +30,7 @@ Add the component to Home Assistant by adding the following to `configuration.ya
 media_player:
   - platform: kef
     host: 192.168.x.x  # the IP of your speaker
+    type: LS50  # or LSX
     name: MyAwesomeSpeaker  # optional, the name in Home Assistant
     maximum_volume: 0.5  # optional, to avoid extremely loud volumes
     volume_step: 0.05  # optional
