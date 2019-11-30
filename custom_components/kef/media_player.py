@@ -3,9 +3,8 @@
 import datetime
 import logging
 
-from aiokef.aiokef import INPUT_SOURCES, AsyncKefSpeaker
 import voluptuous as vol
-
+from aiokef.aiokef import AsyncKefSpeaker
 from homeassistant.components.media_player import (
     PLATFORM_SCHEMA,
     SUPPORT_SELECT_SOURCE,
@@ -20,6 +19,7 @@ from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
+    CONF_TYPE,
     STATE_OFF,
     STATE_ON,
     STATE_UNKNOWN,
@@ -41,7 +41,8 @@ DOMAIN = "kef"
 SCAN_INTERVAL = datetime.timedelta(seconds=30)
 PARALLEL_UPDATES = 0
 
-KEF_LS50_SOURCES = sorted(INPUT_SOURCES.keys())
+SOURCES = {"LSX": ["Wifi", "Bluetooth", "Aux", "Opt"]}
+SOURCES["LS50"] = SOURCES["LSX"] + ["Usb"]
 
 SUPPORT_KEF = (
     SUPPORT_VOLUME_SET
@@ -60,6 +61,7 @@ CONF_STANDBY_TIME = "standby_time"
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_TYPE): vol.In(["LS50", "LSX"]),
         vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_MAX_VOLUME, default=DEFAULT_MAX_VOLUME): cv.small_float,
@@ -77,7 +79,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
 
-    host = config.get(CONF_HOST)
+    host = config[CONF_HOST]
+    speaker_type = config[CONF_TYPE]
     port = config.get(CONF_PORT)
     name = config.get(CONF_NAME)
     maximum_volume = config.get(CONF_MAX_VOLUME)
@@ -85,13 +88,15 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     inverse_speaker_mode = config.get(CONF_INVERSE_SPEAKER_MODE)
     standby_time = config.get(CONF_STANDBY_TIME)
 
+    sources = SOURCES[speaker_type]
+
     _LOGGER.debug(
         "Setting up %s with host: %s, port: %s, name: %s, sources: %s",
         DOMAIN,
         host,
         port,
         name,
-        KEF_LS50_SOURCES,
+        sources,
     )
 
     media_player = KefMediaPlayer(
@@ -102,7 +107,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         volume_step,
         standby_time,
         inverse_speaker_mode,
-        sources=KEF_LS50_SOURCES,
+        sources,
         ioloop=hass.loop,
     )
     unique_id = media_player.unique_id
