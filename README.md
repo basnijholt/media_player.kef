@@ -34,6 +34,8 @@ media_player:
     name: MyAwesomeSpeaker  # optional, the name in Home Assistant
     maximum_volume: 0.5  # optional, to avoid extremely loud volumes
     volume_step: 0.05  # optional
+    inverse_speaker_mode: false  # optional, switch L/R to R/L
+    standby_time: 20  # optional, either 20 or 60 (in minutes) or leave out for an infinite standby time
 ```
 
 ## Discussion
