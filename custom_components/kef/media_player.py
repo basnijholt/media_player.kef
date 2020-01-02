@@ -1,10 +1,11 @@
 """Platform for the KEF Wireless Speakers."""
 
-import datetime
+from datetime import timedelta
 import logging
 
-import voluptuous as vol
 from aiokef.aiokef import AsyncKefSpeaker
+import voluptuous as vol
+
 from homeassistant.components.media_player import (
     PLATFORM_SCHEMA,
     SUPPORT_SELECT_SOURCE,
@@ -17,18 +18,17 @@ from homeassistant.components.media_player import (
 )
 from homeassistant.const import (
     CONF_HOST,
+    CONF_LATITUDE,
+    CONF_LONGITUDE,
     CONF_NAME,
     CONF_PORT,
     CONF_TYPE,
     STATE_OFF,
     STATE_ON,
-    STATE_UNKNOWN,
 )
 from homeassistant.helpers import config_validation as cv
 
-_CONFIGURING = {}
 _LOGGER = logging.getLogger(__name__)
-
 
 DEFAULT_NAME = "KEF"
 DEFAULT_PORT = 50001
@@ -38,7 +38,7 @@ DEFAULT_INVERSE_SPEAKER_MODE = False
 
 DOMAIN = "kef"
 
-SCAN_INTERVAL = datetime.timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(seconds=30)
 PARALLEL_UPDATES = 0
 
 SOURCES = {"LSX": ["Wifi", "Bluetooth", "Aux", "Opt"]}
@@ -99,6 +99,10 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         sources,
     )
 
+    latitude = config.data[CONF_LATITUDE]
+    longitude = config.data[CONF_LONGITUDE]
+    unique_id = f"kef-{latitude}-{longitude}"
+
     media_player = KefMediaPlayer(
         name,
         host,
@@ -109,10 +113,11 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         inverse_speaker_mode,
         sources,
         ioloop=hass.loop,
+        unique_id=unique_id,
     )
-    unique_id = media_player.unique_id
+
     if unique_id in hass.data[DOMAIN]:
-        _LOGGER.debug("%s is already configured.", unique_id)
+        _LOGGER.debug("%s is already configured", unique_id)
     else:
         hass.data[DOMAIN][unique_id] = media_player
         async_add_entities([media_player], update_before_add=True)
@@ -132,6 +137,7 @@ class KefMediaPlayer(MediaPlayerDevice):
         inverse_speaker_mode,
         sources,
         ioloop,
+        unique_id,
     ):
         """Initialize the media player."""
         self._name = name
@@ -145,8 +151,9 @@ class KefMediaPlayer(MediaPlayerDevice):
             inverse_speaker_mode,
             ioloop=ioloop,
         )
+        self._unique_id = unique_id
 
-        self._state = STATE_UNKNOWN
+        self._state = None
         self._muted = None
         self._source = None
         self._volume = None
@@ -182,7 +189,7 @@ class KefMediaPlayer(MediaPlayerDevice):
                 self._state = STATE_OFF
         except (ConnectionRefusedError, ConnectionError, TimeoutError) as err:
             _LOGGER.debug("Error in `update`: %s", err)
-            self._state = STATE_UNKNOWN
+            self._state = None
 
     @property
     def volume_level(self):
@@ -217,22 +224,12 @@ class KefMediaPlayer(MediaPlayerDevice):
     @property
     def unique_id(self):
         """Return the device unique id."""
-        return f"{self._speaker.host}:{self._speaker.port}"
+        return self._unique_id
 
     @property
     def icon(self):
         """Return the device's icon."""
         return "mdi:speaker-wireless"
-
-    @property
-    def should_poll(self):
-        """It's possible that the speaker is controlled manually."""
-        return True
-
-    @property
-    def force_update(self):
-        """Force update."""
-        return False
 
     async def async_turn_off(self):
         """Turn the media player off."""
