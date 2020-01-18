@@ -5,7 +5,7 @@ from functools import partial
 import ipaddress
 import logging
 
-from homeassistant.custom_components.kef_custom.aiokef import AsyncKefSpeaker
+from custom_components.media_player.kef_custom.aiokef import AsyncKefSpeaker
 from getmac import get_mac_address
 import voluptuous as vol
 
