@@ -14,6 +14,10 @@ from aiokef.aiokef import DSP_OPTION_MAPPING
 from getmac import get_mac_address
 from homeassistant.components.media_player import (
     PLATFORM_SCHEMA,
+    SUPPORT_NEXT_TRACK,
+    SUPPORT_PAUSE,
+    SUPPORT_PLAY,
+    SUPPORT_PREVIOUS_TRACK,
     SUPPORT_SELECT_SOURCE,
     SUPPORT_TURN_OFF,
     SUPPORT_TURN_ON,
@@ -51,7 +55,7 @@ DEFAULT_PORT = 50001
 DEFAULT_MAX_VOLUME = 0.5
 DEFAULT_VOLUME_STEP = 0.05
 DEFAULT_INVERSE_SPEAKER_MODE = False
-DEFAULT_SUPPORTS_ON_OFF = True
+DEFAULT_SUPPORTS_ON = True
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
@@ -61,7 +65,7 @@ SOURCES["LS50"] = SOURCES["LSX"] + ["Usb"]
 CONF_MAX_VOLUME = "maximum_volume"
 CONF_VOLUME_STEP = "volume_step"
 CONF_INVERSE_SPEAKER_MODE = "inverse_speaker_mode"
-CONF_SUPPORTS_ON_OFF = "supports_on_off"
+CONF_SUPPORTS_ON = "supports_on"
 CONF_STANDBY_TIME = "standby_time"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -75,7 +79,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(
             CONF_INVERSE_SPEAKER_MODE, default=DEFAULT_INVERSE_SPEAKER_MODE
         ): cv.boolean,
-        vol.Optional(CONF_SUPPORTS_ON_OFF, default=DEFAULT_SUPPORTS_ON_OFF): cv.boolean,
+        vol.Optional(CONF_SUPPORTS_ON, default=DEFAULT_SUPPORTS_ON): cv.boolean,
         vol.Optional(CONF_STANDBY_TIME): vol.In([20, 60]),
     }
 )
@@ -93,7 +97,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     maximum_volume = config[CONF_MAX_VOLUME]
     volume_step = config[CONF_VOLUME_STEP]
     inverse_speaker_mode = config[CONF_INVERSE_SPEAKER_MODE]
-    supports_on_off = config[CONF_SUPPORTS_ON_OFF]
+    supports_on = config[CONF_SUPPORTS_ON]
     standby_time = config.get(CONF_STANDBY_TIME)
 
     sources = SOURCES[speaker_type]
@@ -125,7 +129,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         volume_step,
         standby_time,
         inverse_speaker_mode,
-        supports_on_off,
+        supports_on,
         sources,
         ioloop=hass.loop,
         unique_id=unique_id,
@@ -202,7 +206,7 @@ class KefMediaPlayer(MediaPlayerDevice):
         volume_step,
         standby_time,
         inverse_speaker_mode,
-        supports_on_off,
+        supports_on,
         sources,
         ioloop,
         unique_id,
@@ -220,7 +224,7 @@ class KefMediaPlayer(MediaPlayerDevice):
             ioloop=ioloop,
         )
         self._unique_id = unique_id
-        self._supports_on_off = supports_on_off
+        self._supports_on = supports_on
 
         self._state = None
         self._muted = None
@@ -278,11 +282,16 @@ class KefMediaPlayer(MediaPlayerDevice):
             | SUPPORT_VOLUME_STEP
             | SUPPORT_VOLUME_MUTE
             | SUPPORT_SELECT_SOURCE
+            | SUPPORT_TURN_OFF
+            | SUPPORT_NEXT_TRACK  # only in Bluetooth and Wifi
+            | SUPPORT_PAUSE  # only in Bluetooth and Wifi
+            | SUPPORT_PLAY  # only in Bluetooth and Wifi
+            | SUPPORT_PREVIOUS_TRACK  # only in Bluetooth and Wifi
         )
-        if not self._supports_on_off:
-            return support_kef
-        else:
-            return support_kef | SUPPORT_TURN_OFF | SUPPORT_TURN_ON
+        if self._supports_on:
+            support_kef |= SUPPORT_TURN_ON
+
+        return support_kef
 
     @property
     def source(self):
@@ -311,13 +320,11 @@ class KefMediaPlayer(MediaPlayerDevice):
 
     async def async_turn_off(self):
         """Turn the media player off."""
-        if not self._supports_on_off:
-            raise NotImplementedError()
         await self._speaker.turn_off()
 
     async def async_turn_on(self):
         """Turn the media player on."""
-        if not self._supports_on_off:
+        if not self._supports_on:
             raise NotImplementedError()
         await self._speaker.turn_on()
 
@@ -346,3 +353,19 @@ class KefMediaPlayer(MediaPlayerDevice):
             await self._speaker.set_source(source)
         else:
             raise ValueError(f"Unknown input source: {source}.")
+
+    async def async_media_play(self):
+        """Send play command."""
+        await self._speaker.play_pause()
+
+    async def async_media_pause(self):
+        """Send pause command."""
+        await self._speaker.play_pause()
+
+    async def async_media_previous_track(self):
+        """Send previous track command."""
+        await self._speaker.prev_track()
+
+    async def async_media_next_track(self):
+        """Send next track command."""
+        await self._speaker.next_track()
