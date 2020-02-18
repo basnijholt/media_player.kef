@@ -7,9 +7,9 @@ from functools import partial
 
 import voluptuous as vol
 
-# from custom_components.kef_custom.aiokef import AsyncKefSpeaker
-from aiokef import AsyncKefSpeaker
-from aiokef.aiokef import DSP_OPTION_MAPPING
+from custom_components.kef_custom.aiokef.aiokef import AsyncKefSpeaker, DSP_OPTION_MAPPING
+# from aiokef import AsyncKefSpeaker
+# from aiokef.aiokef import DSP_OPTION_MAPPING
 
 from getmac import get_mac_address
 from homeassistant.components.media_player import (
