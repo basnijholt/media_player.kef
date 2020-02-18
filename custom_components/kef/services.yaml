@@ -23,7 +23,6 @@ set_mode:
       description: The "Bass extension" selector ("Less", "Standard", or "Extra")
       example: "Extra"
 
-
 set_desk_db:
   description: Set the "Desk mode" slider of the speaker in dB.
   fields:

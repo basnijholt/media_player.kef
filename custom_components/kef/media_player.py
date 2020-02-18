@@ -164,7 +164,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             )
         elif service.service == SERVICE_DESK_DB:
             db = service.data.get("db")
-            await media_player.set_desk_db()
+            await media_player.set_desk_db(db)
         elif service.service == SERVICE_WALL_DB:
             db = service.data.get("db")
             await media_player.set_wall_db(db)
