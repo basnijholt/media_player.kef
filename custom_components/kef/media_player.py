@@ -9,6 +9,7 @@ import voluptuous as vol
 
 # from custom_components.kef_custom.aiokef import AsyncKefSpeaker
 from aiokef import AsyncKefSpeaker
+from aiokef.aiokef import DSP_OPTION_MAPPING
 
 from getmac import get_mac_address
 from homeassistant.components.media_player import (
@@ -145,7 +146,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         )
 
         if media_player is None:
-            _LOGGER.warning("Unable to find Channels with entity_id: %s", entity_id)
+            _LOGGER.warning("Unable to find KEF speaker with entity_id: %s", entity_id)
             return
 
         if service.service == SERVICE_MODE:
@@ -170,24 +171,23 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             db = service.data.get("db")
             await media_player.set_sub_db(db)
 
-    hass.services.async_register_admin_service(
-        DOMAIN, SERVICE_DESK_DB, service_handler, schema=DESK_DB_SCHEMA
-    )
-    hass.services.async_register_admin_service(
-        DOMAIN, SERVICE_WALL_DB, service_handler, schema=WALL_DB_SCHEMA
-    )
-    hass.services.async_register_admin_service(
-        DOMAIN, SERVICE_TREBLE_DB, service_handler, schema=TREBLE_DB_SCHEMA
-    )
-    hass.services.async_register_admin_service(
-        DOMAIN, SERVICE_HIGH_HZ, service_handler, schema=HIGH_HZ_SCHEMA
-    )
-    hass.services.async_register_admin_service(
-        DOMAIN, SERVICE_LOW_HZ, service_handler, schema=LOW_HZ_SCHEMA
-    )
-    hass.services.async_register_admin_service(
-        DOMAIN, SERVICE_SUB_DB, service_handler, schema=SUB_DB_SCHEMA
-    )
+    def add_service(name, which, option):
+        schema = vol.Schema(
+            {
+                vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+                vol.Required(option): vol.In(DSP_OPTION_MAPPING[which]),
+            }
+        )
+        hass.services.async_register_admin_service(
+            DOMAIN, name, service_handler, schema=schema,
+        )
+
+    add_service(SERVICE_DESK_DB, "desk_db", "db")
+    add_service(SERVICE_WALL_DB, "wall_db", "db")
+    add_service(SERVICE_TREBLE_DB, "treble_db", "db")
+    add_service(SERVICE_HIGH_HZ, "high_db", "hz")
+    add_service(SERVICE_LOW_HZ, "low_db", "hz")
+    add_service(SERVICE_SUB_DB, "sub_db", "db")
 
 
 class KefMediaPlayer(MediaPlayerDevice):
