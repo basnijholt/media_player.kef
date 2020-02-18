@@ -125,6 +125,60 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         hass.data[DOMAIN][host] = media_player
         async_add_entities([media_player], update_before_add=True)
 
+    async def service_handler(service):
+        """Handle service."""
+        entity_id = service.data.get(ATTR_ENTITY_ID)
+
+        media_player = next(
+            ( d for d in hass.data[DOMAIN] if d.entity_id == entity_id),
+            None,
+        )
+
+        if media_player is None:
+            _LOGGER.warning("Unable to find Channels with entity_id: %s", entity_id)
+            return
+
+        if service.service == SERVICE_MODE:
+            # XXX: 
+            await media_player.set_mode()
+        elif service.service == SERVICE_DESK_DB:
+            db = service.data.get("db")
+            await media_player.set_desk_db()
+        elif service.service == SERVICE_WALL_DB:
+            db = service.data.get("db")
+            await media_player.set_wall_db(db)
+        elif service.service == SERVICE_TREBLE_DB:
+            db = service.data.get("db")
+            await media_player.set_treble_db(db)
+        elif service.service == SERVICE_HIGH_HZ:
+            hz = service.data.get("hz")
+            await media_player.set_high_hz(hz)
+        elif service.service == SERVICE_LOW_HZ:
+            hz = service.data.get("hz")
+            await media_player.set_low_hz(hz)
+        elif service.service == SERVICE_SUB_DB:
+            db = service.data.get("db")
+            await media_player.set_sub_db(db)
+
+    hass.services.async_register_admin_service(
+        DOMAIN, SERVICE_DESK_DB, service_handler, schema=DESK_DB_SCHEMA
+    )
+    hass.services.async_register_admin_service(
+        DOMAIN, SERVICE_WALL_DB, service_handler, schema=WALL_DB_SCHEMA
+    )
+    hass.services.async_register_admin_service(
+        DOMAIN, SERVICE_TREBLE_DB, service_handler, schema=TREBLE_DB_SCHEMA
+    )
+    hass.services.async_register_admin_service(
+        DOMAIN, SERVICE_HIGH_HZ, service_handler, schema=HIGH_HZ_SCHEMA
+    )
+    hass.services.async_register_admin_service(
+        DOMAIN, SERVICE_LOW_HZ, service_handler, schema=LOW_HZ_SCHEMA
+    )
+    hass.services.async_register_admin_service(
+        DOMAIN, SERVICE_SUB_DB, service_handler, schema=SUB_DB_SCHEMA
+    )
+
 
 class KefMediaPlayer(MediaPlayerDevice):
     """Kef Player Object."""
