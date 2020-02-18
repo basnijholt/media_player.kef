@@ -1,15 +1,16 @@
 """Platform for the KEF Wireless Speakers."""
 
-from datetime import timedelta
-from functools import partial
 import ipaddress
 import logging
+from datetime import timedelta
+from functools import partial
+
+import voluptuous as vol
 
 # from custom_components.kef_custom.aiokef import AsyncKefSpeaker
 from aiokef import AsyncKefSpeaker
-from getmac import get_mac_address
-import voluptuous as vol
 
+from getmac import get_mac_address
 from homeassistant.components.media_player import (
     PLATFORM_SCHEMA,
     SUPPORT_SELECT_SOURCE,
@@ -21,6 +22,7 @@ from homeassistant.components.media_player import (
     MediaPlayerDevice,
 )
 from homeassistant.const import (
+    ATTR_ENTITY_ID,
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
@@ -30,6 +32,17 @@ from homeassistant.const import (
 )
 from homeassistant.helpers import config_validation as cv
 
+from .const import (
+    DOMAIN,
+    SERVICE_DESK_DB,
+    SERVICE_HIGH_HZ,
+    SERVICE_LOW_HZ,
+    SERVICE_MODE,
+    SERVICE_SUB_DB,
+    SERVICE_TREBLE_DB,
+    SERVICE_WALL_DB,
+)
+
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "KEF"
@@ -38,8 +51,6 @@ DEFAULT_MAX_VOLUME = 0.5
 DEFAULT_VOLUME_STEP = 0.05
 DEFAULT_INVERSE_SPEAKER_MODE = False
 DEFAULT_SUPPORTS_ON_OFF = True
-
-DOMAIN = "kef"
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
@@ -130,8 +141,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         entity_id = service.data.get(ATTR_ENTITY_ID)
 
         media_player = next(
-            ( d for d in hass.data[DOMAIN] if d.entity_id == entity_id),
-            None,
+            (d for d in hass.data[DOMAIN] if d.entity_id == entity_id), None,
         )
 
         if media_player is None:
@@ -139,7 +149,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             return
 
         if service.service == SERVICE_MODE:
-            # XXX: 
+            # XXX: fix modes
             await media_player.set_mode()
         elif service.service == SERVICE_DESK_DB:
             db = service.data.get("db")
