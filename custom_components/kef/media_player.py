@@ -154,8 +154,14 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             return
 
         if service.service == SERVICE_MODE:
-            # XXX: fix modes
-            await media_player.set_mode()
+            await media_player.set_mode(
+                desk_mode=service.data.get("desk_mode"),
+                wall_mode=service.data.get("wall_mode"),
+                phase_correction=service.data.get("phase_correction"),
+                high_pass=service.data.get("high_pass"),
+                sub_polarity=service.data.get("sub_polarity"),
+                bass_extension=service.data.get("bass_extension"),
+            )
         elif service.service == SERVICE_DESK_DB:
             db = service.data.get("db")
             await media_player.set_desk_db()
@@ -174,6 +180,21 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         elif service.service == SERVICE_SUB_DB:
             db = service.data.get("db")
             await media_player.set_sub_db(db)
+
+    mode_schema = vol.Schema(
+        {
+            vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+            vol.Optional("desk_mode"): vol.boolean,
+            vol.Optional("wall_mode"): vol.boolean,
+            vol.Optional("phase_correction"): vol.boolean,
+            vol.Optional("high_pass"): vol.boolean,
+            vol.Optional("sub_polarity"): vol.In(["-", "+"]),
+            vol.Optional("bass_extension"): vol.In(["Less", "Standard", "Extra"]),
+        }
+    )
+    hass.services.async_register_admin_service(
+        DOMAIN, SERVICE_MODE, service_handler, schema=mode_schema,
+    )
 
     def add_service(name, which, option):
         schema = vol.Schema(
