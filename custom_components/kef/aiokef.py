@@ -507,6 +507,9 @@ class AsyncKefSpeaker:
         sub_polarity=None,
         bass_extension=None,
     ) -> None:
+        """Set the mode of the speaker.
+
+        Leave option None to keep the setting the same."""
         current_mode = await self.get_mode()
         new_mode = Mode(
             desk_mode=desk_mode or current_mode.desk_mode,
