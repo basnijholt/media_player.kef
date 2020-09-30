@@ -1,3 +1,6 @@
+# CHECK OUT https://www.home-assistant.io/integrations/kef/ (which is more up-to-date)
+
+
 # Home Assistant `custom_component` for KEF speakers
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/custom-components/hacs)
 
