@@ -2,7 +2,7 @@
 
 
 # Home Assistant `custom_component` for KEF speakers
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/custom-components/hacs)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
 
 Supported: *KEF LS50 Wireless (tested with latest firmware at 08-11-2019, `p6.2101809171.105039422`)*
 Untested: *KEF LSX*
